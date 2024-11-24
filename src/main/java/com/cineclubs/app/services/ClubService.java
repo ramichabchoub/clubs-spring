@@ -1,5 +1,6 @@
 package com.cineclubs.app.services;
 
+import com.cineclubs.app.dto.ClubDTO;
 import com.cineclubs.app.models.Club;
 import com.cineclubs.app.models.User;
 import com.cineclubs.app.repository.ClubRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ClubService {
@@ -24,17 +26,19 @@ public class ClubService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public List<Club> getAllClubs() {
-        return clubRepository.findAll();
+    public List<ClubDTO> getAllClubs(String userId, boolean includePosts) {
+        return clubRepository.findAll().stream()
+                .map(club -> new ClubDTO(club, userId, includePosts))
+                .collect(Collectors.toList());
     }
 
-    public Club getClubById(Long id) {
-        return clubRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Club not found with id: " + id));
+    public ClubDTO getClubDTOById(Long id, String userId, boolean includePosts) {
+        Club club = getClubById(id);
+        return new ClubDTO(club, userId, includePosts);
     }
 
-    public Club createClub(Club club, String clerkId) {
-        User user = userService.getUserByClerkId(clerkId);
+    public ClubDTO createClub(Club club, String userId) {
+        User user = userService.getUserByClerkId(userId);
         club.setUser(user);
         if (club.getMembers() == null) {
             club.setMembers(new HashSet<>());
@@ -42,14 +46,15 @@ public class ClubService {
         club.getMembers().add(user);
         Club savedClub = clubRepository.save(club);
 
-        messagingTemplate.convertAndSend("/topic/clubs", savedClub);
-        return savedClub;
+        ClubDTO clubDTO = new ClubDTO(savedClub, userId);
+        messagingTemplate.convertAndSend("/topic/clubs", clubDTO);
+        return clubDTO;
     }
 
-    public Club updateClub(Long id, Club clubDetails, String clerkId) {
+    public ClubDTO updateClub(Long id, Club clubDetails, String userId) {
         Club club = getClubById(id);
 
-        if (!club.getUser().getClerkId().equals(clerkId)) {
+        if (!club.getUser().getClerkId().equals(userId)) {
             throw new RuntimeException("Unauthorized to update this club");
         }
 
@@ -59,8 +64,9 @@ public class ClubService {
         club.setCurrentMembers(clubDetails.getCurrentMembers());
 
         Club updatedClub = clubRepository.save(club);
-        messagingTemplate.convertAndSend("/topic/clubs", updatedClub);
-        return updatedClub;
+        ClubDTO clubDTO = new ClubDTO(updatedClub, userId);
+        messagingTemplate.convertAndSend("/topic/clubs", clubDTO);
+        return clubDTO;
     }
 
     public void deleteClub(Long id) {
@@ -95,5 +101,10 @@ public class ClubService {
             Club joinedClub = clubRepository.save(club);
             messagingTemplate.convertAndSend("/topic/clubs", joinedClub);
         }
+    }
+
+    private Club getClubById(Long id) {
+        return clubRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Club not found with id: " + id));
     }
 }

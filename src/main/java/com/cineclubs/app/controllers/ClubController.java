@@ -1,5 +1,6 @@
 package com.cineclubs.app.controllers;
 
+import com.cineclubs.app.dto.ClubDTO;
 import com.cineclubs.app.models.Club;
 import com.cineclubs.app.services.ClubService;
 import org.springframework.http.ResponseEntity;
@@ -18,22 +19,29 @@ public class ClubController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Club>> getAllClubs() {
-        return ResponseEntity.ok(clubService.getAllClubs());
+    public ResponseEntity<List<ClubDTO>> getAllClubs(
+            @RequestParam(required = false) String userId,
+            @RequestParam(defaultValue = "false") boolean includePosts) {
+        return ResponseEntity.ok(clubService.getAllClubs(userId, includePosts));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Club> getClubById(@PathVariable Long id) {
-        return ResponseEntity.ok(clubService.getClubById(id));
+    public ResponseEntity<ClubDTO> getClubById(
+            @PathVariable Long id,
+            @RequestParam(required = false) String userId,
+            @RequestParam(defaultValue = "false") boolean includePosts) {
+        return ResponseEntity.ok(clubService.getClubDTOById(id, userId, includePosts));
     }
 
     @PostMapping
-    public ResponseEntity<Club> createClub(@RequestBody Club club, @RequestParam String clerkId) {
-        return ResponseEntity.ok(clubService.createClub(club, clerkId));
+    public ResponseEntity<ClubDTO> createClub(
+            @RequestBody Club club,
+            @RequestParam String userId) {
+        return ResponseEntity.ok(clubService.createClub(club, userId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Club> updateClub(@PathVariable Long id, @RequestBody Club club,
+    public ResponseEntity<ClubDTO> updateClub(@PathVariable Long id, @RequestBody Club club,
             @RequestParam String clerkId) {
         return ResponseEntity.ok(clubService.updateClub(id, club, clerkId));
     }
