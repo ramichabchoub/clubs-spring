@@ -22,13 +22,12 @@ public class UserController {
     }
 
     @GetMapping("/{clerkId}")
-    public ResponseEntity<UserDTO> getUserByClerkId(@PathVariable String clerkId) {
-        return ResponseEntity.ok(userService.getUserDTOByClerkId(clerkId));
-    }
-
-    @GetMapping("/{clerkId}/with-posts")
-    public ResponseEntity<UserDTO> getUserWithPosts(
-            @PathVariable String clerkId) {
-        return ResponseEntity.ok(userService.getUserDTOWithPostsByClerkId(clerkId));
+    public ResponseEntity<UserDTO> getUserByClerkId(
+            @PathVariable String clerkId,
+            @RequestParam(defaultValue = "false") boolean includePosts) {
+        return ResponseEntity.ok(
+                includePosts
+                        ? userService.getUserDTOWithPostsByClerkId(clerkId)
+                        : userService.getUserDTOByClerkId(clerkId));
     }
 }
