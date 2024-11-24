@@ -103,7 +103,7 @@ public class ClubService {
         }
     }
 
-    private Club getClubById(Long id) {
+    public Club getClubById(Long id) {
         return clubRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Club not found with id: " + id));
     }
